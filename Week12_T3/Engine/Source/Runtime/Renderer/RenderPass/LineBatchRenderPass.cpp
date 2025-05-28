@@ -142,33 +142,82 @@ void FLineBatchRenderPass::AddRenderObjectsToRenderPass(UWorld* World)
         UPhysicsAsset* PhysAsset = SkelComp->GetSkeletalMesh()->GetPhysicsAsset();
         if (!PhysAsset) continue;
 
+        TArray<UBodySetup*> BodySetups;
         // 2) 각 바디셋업(BodySetup) 순회
-        for (UBodySetup* BodySetup : PhysAsset->BodySetups)
+        PhysAsset->GetBodySetups(BodySetups);
+        for (UBodySetup* BodySetup : BodySetups)
         {
-        //    // 본 이름으로 본 인덱스, 본 트랜스폼 얻기
+       
             const int32 BoneIndex = SkelComp->GetBoneIndex(BodySetup->BoneName);
             const FTransform BoneWorldTM = SkelComp->GetBoneTransform(BoneIndex);
+
+            for (const FKSphereElem& Sphere : BodySetup->AggGeom.SphereElems)
+            {
+                FTransform BoneLocalTM = SkelComp->GetBoneTransform(BoneIndex);
+
+
+
+
+                // HalfHeight, Radius 계산
+                float Radius = Sphere.Radius;
+
+                // 최종 월드 위치 (회전된 캡슐 중심)
+
+                FVector LocalCenter = Sphere.Center;
+                FVector WorldCenter = BoneWorldTM.TransformPosition(LocalCenter);
+
+
+                // 기즈모로 캡슐 추가
+                //PrimitiveBatch.AddCapsule(WorldCenter, UpAxis, HalfHeight, Radius, FVector4(0, 1, 0, 0.5f));
+                PrimitiveBatch.AddSphere(WorldCenter, Radius, FVector4(0, 1, 0, 0.5f));
+            }
 
             // 3) 이 바디의 캡슐 요소들 순회
             for (const FKSphylElem& Sphyl : BodySetup->AggGeom.SphylElems)
             {
-                // 로컬 기준 캡슐 트랜스폼 (센터, 회전)
-                FTransform LocalXF = Sphyl.GetTransform();  // :contentReference[oaicite:0]{index=0}
+                FTransform BoneLocalTM = SkelComp->GetBoneTransform(BoneIndex);
+                
+                FTransform LocalXF = Sphyl.GetTransform();
+                FTransform WorldXF = BoneWorldTM * LocalXF;
 
-                // 본 월드 트랜스폼과 곱해 최종 월드 트랜스폼 계산
-                FTransform WorldXF = LocalXF * BoneWorldTM;
+                FQuat CapsuleWorldRotation = BoneWorldTM.GetRotation() * Sphyl.Rotation;
 
-                // 캡슐 정보 추출
-                FVector Center = WorldXF.GetLocation();
-                FVector UpAxis = WorldXF.GetUnitAxis(EAxis::Z);
-                // 축 스케일을 고려한 절반 길이/반지름 (예: 컴포넌트 스케일링 반영)
+                // 2) 이 최종 회전을 로컬 Z축(0,0,1)에 적용
+                FVector UpAxis = CapsuleWorldRotation.RotateVector(FVector(0, 0, 1)).GetSafeNormal();
+
+                // HalfHeight, Radius 계산
                 FVector BoneScale3D = BoneWorldTM.GetScale();
-                float   HalfHeight = Sphyl.GetScaledHalfLength(BoneScale3D);
-                float   Radius = Sphyl.GetScaledRadius(BoneScale3D);
+                float HalfHeight = Sphyl.GetScaledHalfLength(BoneScale3D);
+                float Radius = Sphyl.GetScaledRadius(BoneScale3D);
 
-                // 4) 기즈모로 캡슐 추가
-                PrimitiveBatch.AddCapsule(Center, UpAxis, HalfHeight, Radius, FVector4(0, 1, 0, 0.5f));
+                // 최종 월드 위치 (회전된 캡슐 중심)
+
+                FVector LocalCenter = Sphyl.Center;
+                FVector WorldCenter = BoneWorldTM.TransformPosition(LocalCenter);
+
+
+                // 기즈모로 캡슐 추가
+                PrimitiveBatch.AddCapsule(WorldCenter, UpAxis, HalfHeight, Radius, FVector4(0, 1, 0, 0.5f));
             }
+
+            for (const FKBoxElem& Box : BodySetup->AggGeom.BoxElems)
+            {
+
+                FTransform LocalXF = Box.GetTransform();
+
+                FTransform WorldXF = BoneWorldTM * LocalXF;
+
+                FBoundingBox LocalAABB(
+                    FVector(-Box.X, -Box.Y, -Box.Z),
+                    FVector(Box.X, Box.Y, Box.Z)
+                );
+
+                FMatrix ModelMatrix = WorldXF.ToMatrixWithScale();
+                FVector WorldCenter = WorldXF.GetLocation();
+                
+                PrimitiveBatch.AddOBB(LocalAABB, WorldCenter, ModelMatrix);
+            }
+
         }
 
         for (UPhysicsConstraintTemplate* CT : PhysAsset->ConstraintSetup)
@@ -191,12 +240,6 @@ void FLineBatchRenderPass::AddRenderObjectsToRenderPass(UWorld* World)
                 PA.Distance(PB),
                 FVector4(1, 1, 0, 1)  // 노란색 불투명
             );
-
-            //// (선택) 로컬 축
-            //constexpr float AxisLen = 15.f;
-            //PrimitiveBatch.AddLine(PA, TA.GetUnitAxis(EAxis::X), AxisLen, FVector4(1, 0, 0, 1));
-            //PrimitiveBatch.AddLine(PA, TA.GetUnitAxis(EAxis::Y), AxisLen, FVector4(0, 1, 0, 1));
-            //PrimitiveBatch.AddLine(PA, TA.GetUnitAxis(EAxis::Z), AxisLen, FVector4(0, 0, 1, 1));
         }
     }
 

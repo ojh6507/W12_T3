@@ -14,9 +14,9 @@ void FPhysicsPreviewUI::Initialize(SLevelEditor* LevelEditor, float Width, float
     PhysicsTreePanel->Initialize(LevelEditor, Width, Height);
     Panels["PhysicsTreePanel"] = PhysicsTreePanel;
     
-    auto PhysicsGraphPanel = std::make_shared<PhysicsGraphPreviewEditorPanel>();
+    /*auto PhysicsGraphPanel = std::make_shared<PhysicsGraphPreviewEditorPanel>();
     PhysicsGraphPanel->Initialize(LevelEditor, Width, Height);
-    Panels["PhysicsGraphPanel"] = PhysicsGraphPanel;
+    Panels["PhysicsGraphPanel"] = PhysicsGraphPanel;*/
 
     auto PhysicsDetailPanel = std::make_shared<PhysicsDetailPreviewEditorPanel>();
     PhysicsDetailPanel->Initialize(LevelEditor, Width, Height);

@@ -257,6 +257,14 @@ public:
         ESearchDir::Type SearchDir = ESearchDir::FromStart, int32 StartPosition = -1
     ) const;
 
+    bool Split(
+        const FString& InDelimiter,
+        FString* LeftString,
+        FString* RightString,
+        ESearchCase::Type SearchCase = ESearchCase::IgnoreCase,
+        ESearchDir::Type   SearchDir = ESearchDir::FromStart
+    ) const;
+
     /**
      * 문자열 시작 부분에서 지정된 접두사를 제거합니다. (인라인 버전)
      * @param InPrefix 제거할 접두사 문자열.

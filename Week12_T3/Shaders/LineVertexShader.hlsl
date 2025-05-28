@@ -49,10 +49,10 @@ struct FConeData
 struct FCapsuleData
 {
     float3 Center;
-    float Radius;
     float3 UpVector;
-    float HalfHeight;
     float4 Color;
+    float Radius;
+    float HalfHeight;
 };
 
 struct FOrientedBoxCornerData

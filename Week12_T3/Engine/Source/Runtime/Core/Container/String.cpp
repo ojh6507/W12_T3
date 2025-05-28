@@ -190,6 +190,42 @@ int32 FString::Find(
     }
 }
 
+bool FString::Split(const FString& InDelimiter, FString* LeftString, FString* RightString, ESearchCase::Type SearchCase, ESearchDir::Type SearchDir) const
+{
+    // 구분자 길이
+    int32 DelimLen = InDelimiter.Len();
+    // 구분자 위치 찾기 (앞/뒤 검색 옵션 반영)
+    int32 Index = Find(InDelimiter, SearchCase, SearchDir);
+
+    if (Index != INDEX_NONE)
+    {
+        // LeftString이 nullptr이 아니면 앞부분 할당
+        if (LeftString)
+        {
+            *LeftString = Left(Index);
+        }
+        // RightString이 nullptr이 아니면 뒷부분 할당
+        if (RightString)
+        {
+            *RightString = RightChop(Index + DelimLen);
+        }
+        return true;
+    }
+    else
+    {
+        // 구분자를 찾지 못했을 때
+        if (LeftString)
+        {
+            *LeftString = *this;
+        }
+        if (RightString)
+        {
+            *RightString = FString();
+        }
+        return false;
+    }
+}
+
 bool FString::RemoveFromStart(const FString& InPrefix)
 {
     const int32 PrefixLen = InPrefix.Len();

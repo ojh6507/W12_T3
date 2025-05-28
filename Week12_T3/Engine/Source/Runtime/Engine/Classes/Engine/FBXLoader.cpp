@@ -357,9 +357,14 @@ void FFBXLoader::ExtractBoneFromNode(FbxNode* Node, FSkeletalMeshRenderData& Out
         
         if (!BoneNode)
             continue;
-            
-        FString BoneName = BoneNode->GetName();
         
+        FString BoneName = BoneNode->GetName();
+        /*FString LeftPart, RightPart;
+        if (BoneName.Split(TEXT(":"), &LeftPart, &RightPart))
+        {
+            BoneName = RightPart;
+        }*/
+
         // Check if this bone already exists
         int* ExistingBoneIndex = OutRefSkeletal.BoneNameToIndexMap.Find(BoneName);
         if (ExistingBoneIndex)

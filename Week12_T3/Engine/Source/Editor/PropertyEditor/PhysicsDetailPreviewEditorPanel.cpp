@@ -49,36 +49,37 @@ void PhysicsDetailPreviewEditorPanel::Render()
     ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(PickedActor);
     if (!SkeletalActor)
     {
-        ImGui::Text("No valid skeletal mesh actor selected.");
-        ImGui::End();
+        UE_LOG(LogLevel::Warning, "Invalid SkeletalActor");
         return;
     }
 
     USkeletalMeshComponent* SkeletalMeshComp = SkeletalActor->GetSkeletalMeshComponent();
     if (!SkeletalMeshComp || !SkeletalMeshComp->GetSkeletalMesh())
     {
-        ImGui::Text("No valid skeletal mesh component found.");
-        ImGui::End();
+        UE_LOG(LogLevel::Warning, "Invalid SkeletalMeshComponent");
         return;
     }
 
     UPhysicsAsset* PhysicsAsset = SkeletalMeshComp->GetSkeletalMesh()->GetPhysicsAsset();
     if (!PhysicsAsset)
     {
-        ImGui::Text("No physics asset assigned.");
-        ImGui::End();
+        UE_LOG(LogLevel::Warning, "Invalid PhysicsAsset");
         return;
     }
+   
+    TArray<UBodySetup*> BodySetups;
+    PhysicsAsset->GetBodySetups(BodySetups);
 
+    
     /* Pre Setup */
     float PanelWidth = (Width) * 0.2f - 6.0f;
-    float PanelHeight = (Height) * 0.65f;
+    float PanelHeight = (Height) * 0.9f;
 
     float PanelPosX = (Width) * 0.8f + 5.0f;
-    float PanelPosY = (Height) * 0.3f + 15.0f;
+    float PanelPosY = 45.0f;
 
     ImVec2 MinSize(140, 370);
-    ImVec2 MaxSize(FLT_MAX, 900);
+    ImVec2 MaxSize(FLT_MAX, 1500);
 
     /* Min, Max Size */
     ImGui::SetNextWindowSizeConstraints(MinSize, MaxSize);
@@ -98,6 +99,7 @@ void PhysicsDetailPreviewEditorPanel::Render()
     using EType = EPhysicsNodeType;
     EType Type = PhysicsTreePreviewEditorPanel::SelectedType;
 
+    
     switch (PhysicsTreePreviewEditorPanel::SelectedType) {
     case EType::Bone:
     {
@@ -112,7 +114,7 @@ void PhysicsDetailPreviewEditorPanel::Render()
     }
     case EType::Body:
     {
-        UBodySetup* Body = PhysicsAsset->BodySetups[PhysicsTreePreviewEditorPanel::SelectedBodyIndex];
+        UBodySetup* Body = BodySetups[PhysicsTreePreviewEditorPanel::SelectedBodyIndex];
         DrawPropertiesForObject(Body);
         break;
     }
